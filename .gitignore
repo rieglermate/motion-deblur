@@ -1,0 +1,19 @@
+# Visual Studio - WinForms
+
+# User-specific files
+*.suo
+*.user
+
+# Build results
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+
+# Visual Studio cache/options directory
+.vs/
+
+# Python
+
+# Byte-compiled files
+__pycache__/
