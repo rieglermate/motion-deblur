@@ -119,9 +119,19 @@ def deblur_image(request: ImageRequest):
     except binascii.Error as exc:
         raise HTTPException(400, detail="Sent base64 data is invalid") from exc
     except UnidentifiedImageError as exc:
-        raise HTTPException(400, detail="Sent base64 data is not a valid image") from exc
+        raise HTTPException(400, detail="Sent base64 data is not an image") from exc
+    
+    # this is only needed because Image.open() is a lazy operation
+    # img.verify() is not enough to verify as valid image
+    # as found here https://github.com/python-pillow/Pillow/issues/3012
+    # if the data is an invalid image, Image.resize() raises OSError because it internally calls load() anyway
+    try:
+        img.load()
+    except OSError as exc:
+        raise HTTPException(400, detail="Sent base64 data is an invalid image") from exc
 
-    img_resized: Image = img.resize((256, 144), resample=Image.LANCZOS).convert("RGB")
+    # here we can assume img is valid image
+    img_resized: Image = img.resize((256, 144), resample=Image.Resampling.LANCZOS).convert("RGB")
     result_img: Image = apply_model(img_resized)
 
     return {
