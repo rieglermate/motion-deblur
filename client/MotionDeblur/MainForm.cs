@@ -1,11 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -14,6 +10,9 @@ namespace MotionDeblur
 {
     public partial class MainForm : Form
     {
+        /// <summary>
+        /// Container class for providing easy access to user settings.
+        /// </summary>
         public class Settings
         {
             public string ServerAddress { get; set; }
@@ -22,14 +21,26 @@ namespace MotionDeblur
 
         #region Fields
 
+        /// <summary>
+        /// Stored user settings.
+        /// </summary>
         private Settings settings;
+        /// <summary>
+        /// Handles connection with the API.
+        /// </summary>
         private HttpClient client;
+        /// <summary>
+        /// Currently active image, this will be sent when making a request.
+        /// </summary>
         private string currentImageBase64;
 
         #endregion
 
         #region Constructors
 
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
         public MainForm()
         {
             InitializeComponent();
@@ -56,6 +67,7 @@ namespace MotionDeblur
                 try
                 {
                     byte[] imageBytes = System.IO.File.ReadAllBytes(openFileDialog.FileName);
+                    //Length of byte array can be considered equal to file size
                     if (imageBytes.Length > 50 * (1024 * 1024))
                     {
                         MessageBox.Show("A kiválasztott kép túl nagy (>50MB)", "Hiba!", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
@@ -75,6 +87,7 @@ namespace MotionDeblur
 
         private void buttonSaveResize_Click(object sender, EventArgs e)
         {
+            //Uses the same image file format list, and also defaults to PNG
             SaveFileDialog saveFileDialog = new SaveFileDialog
             {
                 Title = "Kép mentése...",
@@ -86,6 +99,7 @@ namespace MotionDeblur
             {
                 try
                 {
+                    //Save method takes care of file formats
                     pictureBoxResize.Image.Save(saveFileDialog.FileName);
                     toolStripStatusLabel.Text = String.Format("Kép elmentve ({0})",
                         System.IO.Path.GetFileName(saveFileDialog.FileName));
@@ -99,6 +113,7 @@ namespace MotionDeblur
 
         private void buttonSaveDeblur_Click(object sender, EventArgs e)
         {
+            //Uses the same image file format list, and also defaults to PNG
             SaveFileDialog saveFileDialog = new SaveFileDialog
             {
                 Title = "Kép mentése...",
@@ -110,6 +125,7 @@ namespace MotionDeblur
             {
                 try
                 {
+                    //Save method takes care of file formats
                     pictureBoxDeblur.Image.Save(saveFileDialog.FileName);
                     toolStripStatusLabel.Text = String.Format("Kép elmentve ({0})",
                         System.IO.Path.GetFileName(saveFileDialog.FileName));
@@ -123,6 +139,7 @@ namespace MotionDeblur
 
         private async void buttonStart_Click(object sender, EventArgs e)
         {
+            //User should wait until the completion of the most recent request
             buttonOpenFile.Enabled = false;
             buttonStart.Enabled = false;
 
@@ -139,6 +156,8 @@ namespace MotionDeblur
             {
                 using var response = await client.PostAsync(settings.APIPath, new ByteArrayContent(jsonString));
                 response.EnsureSuccessStatusCode();
+
+                //At this point we successfully got the answer
                 string responseBody = await response.Content.ReadAsStringAsync();
                 var responseJson = JsonSerializer.Deserialize<Dictionary<string, string>>(responseBody);
 
@@ -147,6 +166,7 @@ namespace MotionDeblur
                 pictureBoxResize.Image = Image.FromStream(new System.IO.MemoryStream(Convert.FromBase64String(responseJson["imageResize"])));
                 pictureBoxDeblur.Image = Image.FromStream(new System.IO.MemoryStream(Convert.FromBase64String(responseJson["imageDeblur"])));
 
+                //If the request was successful, the user should be able to save the results
                 toolStripStatusLabel.Text = "Kép feldolgozása sikeres";
                 buttonSaveDeblur.Enabled = true;
                 buttonSaveResize.Enabled = true;
@@ -161,6 +181,7 @@ namespace MotionDeblur
             }
             finally
             {
+                //Anything happened, make sure we enable selecting and starting again
                 buttonOpenFile.Enabled = true;
                 buttonStart.Enabled = true;
             }
@@ -168,6 +189,7 @@ namespace MotionDeblur
 
         private void buttonHelp_Click(object sender, EventArgs e)
         {
+            //Simplest built-in method of providing help to the user
             Help.ShowHelp(this, "Help.html");
             toolStripStatusLabel.Text = "Segítség fájl megnyitva az alapértelmezett böngészőben";
         }
