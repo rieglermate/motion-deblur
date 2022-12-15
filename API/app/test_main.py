@@ -35,6 +35,10 @@ def test_invalid_data():
     response = client.post("/deblur/", json={"imageData": image_data[:-2]})
     assert response.status_code == 400
 
+def test_invalid_key():
+    response = client.post("/deblur/", json={"image": image_data})
+    assert response.status_code == 422
+
 def test_invalid_request_get():
     response = client.get("/deblur/", json={"imageData": image_data})
     assert response.status_code == 405
